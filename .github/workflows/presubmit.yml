@@ -1,0 +1,67 @@
+name: Presubmit check
+
+on:
+
+  workflow_dispatch:
+
+  push:
+    branches:
+    - main
+    - develop
+
+  pull_request:
+    branches:
+    - main
+    - develop
+
+env:
+  # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+jobs:
+
+  example-c-hello-world:
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_PATH: ${{github.workspace}}/example/c/hello-world
+      PROJECT_NAME: HelloWorld C example
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure ${{env.PROJECT_NAME}}
+      working-directory: ${{env.PROJECT_PATH}}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build ${{env.PROJECT_NAME}}
+      working-directory: ${{env.PROJECT_PATH}}
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+  example-cpp-hello-world:
+    runs-on: ubuntu-latest
+
+    env:
+      PROJECT_PATH: ${{github.workspace}}/example/cpp/hello-world
+      PROJECT_NAME: HelloWorld C++ example
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Configure ${{env.PROJECT_NAME}}
+      working-directory: ${{env.PROJECT_PATH}}
+      run: cmake -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+    - name: Build ${{env.PROJECT_NAME}}
+      working-directory: ${{env.PROJECT_PATH}}
+      run: cmake --build build --config ${{env.BUILD_TYPE}}
+
+  build:
+    runs-on: ubuntu-latest
+    needs:
+    - example-c-hello-world
+    - example-cpp-hello-world
+
+    steps:
+    - name: Main build job
+      run: cmake --version

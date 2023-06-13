@@ -1,6 +1,6 @@
 # Ripple
 
-This repo contains the public releases of the Ripple API code and example programs. For more information contact ripple@cta.tech. 
+This repo contains the public releases of the Ripple API code and example programs. For more information contact ripple@cta.tech.
 
 See https://shop.cta.tech/collections/standards/products/https-cdn-cta-tech-cta-media-media-shop-standards-2020-ripple-radar-sensor-api-standard-v1-1-final-pdf for the associated Specification.
 
