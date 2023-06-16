@@ -26,6 +26,7 @@
 #define RADAR_API_RADAR_COMMON_H_
 
 #include <inttypes.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,122 +40,288 @@ extern "C" {
 typedef uint16_t RadarReturnCode;
 
 //! A default undefined value that should be used at initialization.
-#define RC_UNDEFINED        0
+#define RC_UNDEFINED                        0
 //! Operation completed successfully.
-#define RC_OK               1
+#define RC_OK                               1
 //! Operation failed and no more information can be provided.
-#define RC_ERROR            2
+#define RC_ERROR                            2
 //! Input parameters are invalid or out of supported range.
-#define RC_BAD_INPUT        3
+#define RC_BAD_INPUT                        3
 //! Operation timed out.
-#define RC_TIMEOUT          4
+#define RC_TIMEOUT                          4
 //! Operation cannot be performed at the current state.
-#define RC_BAD_STATE        5
+#define RC_BAD_STATE                        5
 //! Operation failed due to limited resources (memory, timers, mutexes, etc).
-#define RC_RES_LIMIT        6
+#define RC_RES_LIMIT                        6
 //! Operation is not supported.
-#define RC_UNSUPPORTED      7
+#define RC_UNSUPPORTED                      7
 //! An internal system error that should never happen.
-#define RC_OOPS             8
+#define RC_OOPS                             8
+
+//! A list of radar types.
+typedef uint8_t RadarType;
+
+//! A default undefined value that should be used at initialization.
+#define RTYPE_UNDEFINED                     0
+//! Radar type as Frequency Modulated Continuous Wave.
+#define RTYPE_FMCW                          1
+//! Radar type as Impulse.
+#define RTYPE_PULSED                        2
+//! Radar type as Ultra Wide Band.
+#define RTYPE_UWB                           3
+
+//! A list of radar sample data types.
+typedef uint32_t RadarSampleDType;
+
+//! A default undefined value that should be used at initialization.
+#define RSAMPLE_DTYPE_UNDEFINED             0
+//! Radar sample data type as integer.
+#define RSAMPLE_DTYPE_INT                   1
+//! Radar sample data type as unsigned integer.
+#define RSAMPLE_DTYPE_UINT                  2
+//! Radar sample data type as complex integer.
+#define RSAMPLE_DTYPE_CINT                  3
+//! Radar sample data type as complex unsigned integer.
+#define RSAMPLE_DTYPE_CUINT                 4
+//! Radar sample data type as float.
+#define RSAMPLE_DTYPE_FLOAT                 5
+//! Radar sample data type as complex float.
+#define RSAMPLE_DTYPE_CFLOAT                6
 
 //! A list of possible power mode states for radar sensors.
 typedef uint16_t RadarState;
 
 //! A default undefined value that should be used at initialization.
-#define RSTATE_UNDEFINED    0
+#define RSTATE_UNDEFINED                    0
 //! Active state when radar is emitting/collecting data started.
-#define RSTATE_ACTIVE       1
+#define RSTATE_ACTIVE                       1
 //! Idle state when the radar is neither ACTIVE nor SLEEP nor OFF.
-#define RSTATE_IDLE         2
+#define RSTATE_IDLE                         2
 //! Sleep state when configuration persists but power consumption reduced.
-#define RSTATE_SLEEP        3
+#define RSTATE_SLEEP                        3
 //! When radar is currently turned off and configuration is reset.
-#define RSTATE_OFF          4
+#define RSTATE_OFF                          4
 
-//! Defineis how an internal fifo buffer should behave in case of overflow.
-typedef uint16_t RadarFifoMode;
-
-//! A default undefined value that should be used at initialization.
-#define RFIFO_UNDEFINED     0
-//! A new burst will be ignored.
-#define RFIFO_DROP_NEW      1
-//! The oldest burst(s) will be dropped to release space for a new burst.
-#define RFIFO_DROP_OLD      2
-
-//! Log level
+//! A list of log levels.
 typedef uint32_t RadarLogLevel;
 
 //! A default undefined value that should be used at initialization.
-#define RLOG_UNDEFINED      0
+#define RLOG_UNDEFINED                      0
 //! None of log messages are requested.
-#define RLOG_OFF            1
+#define RLOG_OFF                            1
 //! Provide only log messages about occurred errors.
-#define RLOG_ERR            2
+#define RLOG_ERR                            2
 //! Provide log messages same as for RLOG_ERR and warnings.
-#define RLOG_WRN            3
+#define RLOG_WRN                            3
 //! Provide log messages same as for RLOG_WRN and informative changes.
-#define RLOG_INF            4
+#define RLOG_INF                            4
 //! Provide log messages same as for RLOG_INF and debugging info details.
-#define RLOG_DBG            5
+#define RLOG_DBG                            5
 
 
 //--------------------------------------
-//----- Params -------------------------
+//----- Main Params --------------------
 //--------------------------------------
+
+//! A list of radar sensor parameters group IDs.
+typedef uint16_t RadarParamGroup;
+
+//! A default undefined value that should be used at initialization.
+#define RADAR_PARAM_GROUP_UNDEFINED         0
+//! A group ID for main params that are common across radars.
+#define RADAR_PARAM_GROUP_COMMON            1
+//! A group ID dedicated for FMCW kind of radars.
+#define RADAR_PARAM_GROUP_FMCW              2
+//! A group ID dedicated for Pulsed kind of radars.
+#define RADAR_PARAM_GROUP_PULSED            3
+//! A group ID dedicated for UWB kind of radars.
+#define RADAR_PARAM_GROUP_UWB               4
 
 //! A list of radar sensor parameters that define main characteristics.
 //! A configuration slot can hold only 1 value for each MainParam.
-typedef uint32_t RadarMainParam;
+typedef uint16_t RadarMainParamId;
+
+//! A general container for a main parameter that defines its group and ID.
+typedef struct RadarMainParam_s {
+  //! Group ID that radar main param belongs to.
+  RadarParamGroup group;
+  //! Param ID that belongs to the specified group.
+  RadarMainParamId id;
+} RadarMainParam;
+
+// Common radar main params.
 
 //! A default undefined value that should be used at initialization.
 #define RADAR_PARAM_UNDEFINED               0
 //! Power mode for after the burst period.
 #define RADAR_PARAM_AFTERBURST_POWER_MODE   1
-//! Power mode for the period between chirps.
-#define RADAR_PARAM_INTERCHIRP_POWER_MODE   2
 //! Duration between the start times of two consecutive bursts.
-#define RADAR_PARAM_BURST_PERIOD_US         3
-//! Duration between the start times of two consecutive chirps.
-#define RADAR_PARAM_CHIRP_PERIOD_US         4
-//! Amount of chirps within the burst.
-#define RADAR_PARAM_CHIRPS_PER_BURST        5
-//! The number of ADC sample values captured for each chirp.
-#define RADAR_PARAM_SAMPLES_PER_CHIRP       6
-//! The lower frequency at what TX antenna starts emitting the signal.
-#define RADAR_PARAM_LOWER_FREQ_MHZ          7
-//! The upper frequency at what TX antenna stops emitting the signal.
-#define RADAR_PARAM_UPPER_FREQ_MHZ          8
+#define RADAR_PARAM_BURST_PERIOD_US         2
 //! Bit mask for enabled TX antennas.
-#define RADAR_PARAM_TX_ANTENNA_MASK         9
+#define RADAR_PARAM_TX_ANTENNA_MASK         3
 //! Bit mask for enabled RX antennas.
-#define RADAR_PARAM_RX_ANTENNA_MASK        10
-//! Unused parameter.
-#define RADAR_PARAM_UNUSED_0               11
+#define RADAR_PARAM_RX_ANTENNA_MASK         4
+
+// FMCW specific main params.
+
+//! A default undefined value that should be used at initialization.
+#define FMCW_PARAM_UNDEFINED                0
+//! Power mode for the period between chirps.
+#define FMCW_PARAM_INTERCHIRP_POWER_MODE    1
+//! Duration between the start times of two consecutive chirps.
+#define FMCW_PARAM_CHIRP_PERIOD_US          2
+//! Amount of chirps within the burst.
+#define FMCW_PARAM_CHIRPS_PER_BURST         3
+//! The number of ADC sample values captured for each chirp.
+#define FMCW_PARAM_SAMPLES_PER_CHIRP        4
+//! The lower frequency at what TX antenna starts emitting the signal.
+#define FMCW_PARAM_LOWER_FREQ_MHZ           5
+//! The upper frequency at what TX antenna stops emitting the signal.
+#define FMCW_PARAM_UPPER_FREQ_MHZ           6
 //! ADC sampling frequency.
-#define RADAR_PARAM_ADC_SAMPLING_HZ        12
+#define FMCW_PARAM_ADC_SAMPLING_HZ          7
+
+// PULSED specific main params.
+
+//! A default undefined value that should be used at initialization.
+#define PULSED_PARAM_UNDEFINED              0
+//! Power mode for the period between sweeps.
+#define PULSED_PARAM_INTERSWEEP_POWER_MODE  1
+//! The duration between the start times of two consecutive Radar sweeps.
+#define PULSED_PARAM_SWEEP_PERIOD_US        2
+//! The number of Radar sweeps within the Radar burst.
+#define PULSED_PARAM_SWEEPS_PER_BURST       3
+//! The number of samples captured for each Radar sweep.
+#define PULSED_PARAM_SAMPLES_PER_SWEEP      4
+//! Length of offset in number of samples to limit retrieved channel data.
+#define PULSED_PARAM_START_OFFSET           5
+//! Pulse Repetition Frequency. Use get param range API to get min/max value.
+#define PULSED_PARAM_PRF_IDX                6
+
+// UWB specific main params.
+
+//! A default undefined value that should be used at initialization.
+#define UWB_PARAM_UNDEFINED                 0
+//! UWB channel number to be used.
+#define UWB_PARAM_INTERSWEEP_POWER_MODE     1
+//! The duration between the start times of two consecutive Radar sweeps.
+#define UWB_PARAM_SWEEP_PERIOD_US           2
+//! The number of Radar sweeps within the Radar burst.
+#define UWB_PARAM_SWEEPS_PER_BURST          3
+//! The number of samples captured for each Radar sweep.
+#define UWB_PARAM_SAMPLES_PER_SWEEP         4
+//! Length of offset in number of samples to limit retrieved channel data.
+#define UWB_PARAM_START_OFFSET              5
+//! UWB channel number to be used.
+#define UWB_PARAM_PRF_IDX                   6
+//! UWB channel number to be used.
+#define UWB_RADAR_CHANNEL_NUMBER            7
+//! Ranging frame configuration used to transmit/receive ranging messages.
+#define UWB_RADAR_PARAM_STS_PACKET_CONFIG   8
+//! Length of preamble in symbols repetitions.
+#define UWB_RADAR_PARAM_PREAMBLE_LENGTH     9
+//! Preamble code index to be used as per IEEE 802.15.4a and 802.15.4z.
+#define UWB_RADAR_PARAM_PREAMBLE_IDX        10
+//! The priority value for the radar session.
+#define UWB_RADAR_PARAM_SESSION_PRIORITY    11
+//! Size of single sample in bits including real and imaginary parts.
+#define UWB_RADAR_BITS_PER_SAMPLE           12
+//! Maximum number of bursts to be executed before radar automatically changes
+//! state to not active.
+#define UWB_RADAR_NUMBER_OF_BURSTS          13
+
+
+//--------------------------------------
+//----- TX Params ----------------------
+//--------------------------------------
 
 //! A TX antennas specific list of parameters.
-typedef uint32_t RadarTxParam;
+typedef uint16_t RadarTxParamId;
+
+typedef struct RadarTxParam_s {
+  RadarParamGroup group;
+  RadarTxParamId id;
+} RadarTxParam;
+
+// Common radar TX params.
 
 //! A default undefined value that should be used at initialization.
-#define TX_PARAM_UNDEFINED                  0
-//! A TX antenna emitting power in dB.
-#define TX_PARAM_POWER_DB                   1
+#define RADAR_TX_PARAM_UNDEFINED            0
+
+// FMCW specific TX params.
+
+//! A default undefined value that should be used at initialization.
+#define FMCW_TX_PARAM_UNDEFINED             0
+//! A TX antenna emitting power index on scale defined by min/max range.
+#define FMCW_TX_PARAM_POWER_IDX             1
+
+// PULSED specific TX params.
+
+//! A default undefined value that should be used at initialization.
+#define PULSED_TX_PARAM_UNDEFINED           0
+//! A TX antenna emitting power index on scale defined by min/max range.
+#define PULSED_TX_PARAM_POWER_IDX           1
+
+// UWB specific TX params.
+
+//! A default undefined value that should be used at initialization.
+#define UWB_TX_PARAM_UNDEFINED              0
+//! A TX antenna emitting power index on scale defined by min/max range.
+#define UWB_TX_PARAM_POWER_IDX              1
+
+
+//--------------------------------------
+//----- TX Params ----------------------
+//--------------------------------------
 
 //! A RX antennas specific list of parameters.
-typedef uint32_t RadarRxParam;
+typedef uint32_t RadarRxParamId;
+
+typedef struct RadarRxParam_s {
+  RadarParamGroup group;
+  RadarRxParamId id;
+} RadarRxParam;
+
+// Common radar RX params.
 
 //! A default undefined value that should be used at initialization.
-#define RX_PARAM_UNDEFINED                  0
-//! Variable Gain Amplifiers (VGA) in dB.
-#define RX_PARAM_VGA_DB                     1
-//! High Phase (HP) filter gain in dB.
-#define RX_PARAM_HP_GAIN_DB                 2
-//! High Phase (HP) cut off frequency in kHz.
-#define RX_PARAM_HP_CUTOFF_KHZ              3
+#define RADAR_RX_PARAM_UNDEFINED            0
 
-//! Forward declaration for a list of vensor specific parameters.
+// FMCW specific RX params.
+
+//! A default undefined value that should be used at initialization.
+#define FMCW_RX_PARAM_UNDEFINED             0
+//! Variable Gain Amplifiers (VGA) index on scale defined by min/max range.
+#define FMCW_RX_PARAM_VGA_IDX               1
+//! High Phase (HP) filter gain index on scale defined by min/max range.
+#define FMCW_RX_PARAM_HP_GAIN_IDX           2
+//! High Phase (HP) cut off frequency in kHz.
+#define FMCW_RX_PARAM_HP_CUTOFF_KHZ         3
+
+// PULSED specific RX params.
+
+//! A default undefined value that should be used at initialization.
+#define PULSED_RX_PARAM_UNDEFINED           0
+//! Variable Gain Amplifiers (VGA) on scale defined by min/max range.
+#define PULSED_RX_PARAM_VGA_IDX             1
+
+// UWB specific RX params.
+
+//! A default undefined value that should be used at initialization.
+#define UWB_RX_PARAM_UNDEFINED              0
+
+
+//--------------------------------------
+//----- Vendor Params ------------------
+//--------------------------------------
+
+//! Forward declaration for a list of vendor specific parameters.
 typedef uint32_t RadarVendorParam;
+//! Forward declaration for a list of vendor specific TX parameters.
+typedef uint32_t RadarVendorTxParam;
+//! Forward declaration for a list of vendor specific RX parameters.
+typedef uint32_t RadarVendorRxParam;
+
 
 //--------------------------------------
 //----- Data types ---------------------
@@ -162,35 +329,34 @@ typedef uint32_t RadarVendorParam;
 
 //! Describes a data format of burst data.
 typedef struct RadarBurstFormat_s {
-  //! Sequence number for the current burst.
   uint32_t sequence_number;
-  //! Maximum value ADC sampler produces.
-  uint32_t max_sample_value;
-  //! Amount of bits per single sample.
-  uint8_t bits_per_sample;
-  //! Amount of samples per single chirp.
-  uint16_t samples_per_chirp;
-  //! Amount of active channels in the current burst.
-  uint8_t channels_count;
-  //! Amount of chirps in the current burst.
-  uint8_t chirps_per_burst;
-  //! Config slot ID used to generate the current burst.
+  RadarType radar_type;
   uint8_t config_id;
+  RadarSampleDType sample_data_type;
+  uint8_t bits_per_sample;
+
+  uint8_t num_channels;
+  uint8_t is_channels_interleaved;
+  uint8_t is_big_endian;
+  uint8_t reserved_1;
+
+  // Custom radar specific fields.
   union {
     struct {
-      //! True/1 if channels and samples are interleaved.
-      uint16_t is_channels_interleaved: 1;
-      //! True/1 if a word is in big endian.
-      uint16_t is_big_endian: 1;
-      //! Reserved for future use.
-      uint16_t reserved: 14;
-    };
-    uint16_t flags;
-  };
-  //! CRC for the current burst data buffer.
-  uint32_t burst_data_crc;
-  //! Timestamp when the burst was created since radar was turned on.
-  uint32_t timestamp_ms;
+      uint16_t samples_per_chirp;
+      uint16_t chirps_per_burst;
+    } fmcw;
+    struct {
+      uint16_t samples_per_sweep;
+      uint16_t sweeps_per_burst;
+    } pusled;
+    struct {
+      uint32_t session_handle;
+      uint16_t samples_per_sweep;
+      uint16_t sweeps_per_burst;
+    } uwb;
+  } custom;
+
 } RadarBurstFormat;
 
 //! A semantic version holder.
@@ -201,25 +367,22 @@ typedef struct Version_s {
   uint8_t build;
 } Version;
 
-//! Maximum length of a sensor's name including a zero terminated symbol.
-#define MAX_SENSOR_NAME_LEN 32
-
-//! Maximum length of a vendor's name including a zero terminated symbol.
-#define MAX_VENDOR_NAME_LEN 32
-
 //! The general information about the radar sensor hardware and software.
 typedef struct SensorInfo_s {
   //! Name of the radar sensor.
-  const char name[MAX_SENSOR_NAME_LEN];
+  const char* name;
   //! Vendor name.
-  const char vendor[MAX_VENDOR_NAME_LEN];
+  const char* vendor;
   //! ID that identifies this sensor.
   uint32_t device_id;
+  //! Radar type.
+  RadarType radar_type;
   //! The radar driver version.
   Version driver_version;
-  //! The Radar API version that the current driver supports.
-  Version api_version;
 } SensorInfo;
+
+//! The very basic way to get the Radar API version supported by the driver.
+Version radarGetRadarApiVersion(void);
 
 #ifdef __cplusplus
 }

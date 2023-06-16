@@ -45,7 +45,9 @@ namespace radar_api {
  *        about it's events.
  */
 class IRadarSensorObserver {
-  public:
+ public:
+  virtual ~IRadarSensorObserver(){}
+
   /**
    * @brief An interface function declaration that will be invoked
    *        when a new burst is ready for read. Can be set using
@@ -69,7 +71,7 @@ class IRadarSensorObserver {
    * @param message a completely formed log message.
    *
    */
-  virtual void OnLogMessage(int level, const char* file,
+  virtual void OnLogMessage(RadarLogLevel level, const char* file,
                             const char* function,
                             int line, const std::string& message) = 0;
 
@@ -90,6 +92,8 @@ class IRadarSensorObserver {
 
 class IRadarSensor {
  public:
+  virtual ~IRadarSensor(){}
+
   // Feedback
 
   /**
@@ -101,7 +105,7 @@ class IRadarSensor {
    * @note Log messages will not be generated during execution of
    *       ctor/dtor and AddObserver/RemoveObserver API.
    *
-   * @param observer pointer to the implementation of the interface to add.
+   * @param observer pointer to the implmenetation of the interface to add.
    */
   virtual RadarReturnCode AddObserver(IRadarSensorObserver* observer) = 0;
 
@@ -113,7 +117,7 @@ class IRadarSensor {
    * @note Log messages will not be generated during execution of
    *       ctor/dtor and AddObserver/RemoveObserver API.
    *
-   * @param observer pointer to the implementation of the interface to remove.
+   * @param observer pointer to the implmenetation of the interface to remove.
    */
   virtual RadarReturnCode RemoveObserver(IRadarSensorObserver* observer) = 0;
 
@@ -150,18 +154,19 @@ class IRadarSensor {
   // Configuration.
 
   /**
-   * @brief Set mode of the internal FIFO that holds radar bursts.
-   *
-   * @param mode a new fifo mode for the internal buffer.
-   */
-  virtual RadarReturnCode SetFifoMode(RadarFifoMode mode) = 0;
-
-  /**
    * Get the total available configuration slots.
    *
    * @param num_slots where the number of config slots to write.
    */
   virtual RadarReturnCode GetNumConfigSlots(uint8_t& num_slots) = 0;
+
+  /**
+   * @brief Get the maximum number of activated configuration slots.
+   *
+   * @param num_slots where the maximum number of
+   *        active config slots to write.
+   */
+  virtual RadarReturnCode GetMaxActiveConfigSlots(uint8_t& num_slots) = 0;
 
   /**
    * @brief Activate a specified configuration slot. Does not start the radar.
@@ -195,7 +200,7 @@ class IRadarSensor {
    * @param id a parameter ID to be read.
    * @param value where a parameter value will be written into.
    */
-  virtual RadarReturnCode GetMainParam(uint8_t slot_id, RadarMainParam id,
+  virtual RadarReturnCode GetMainParam(uint8_t slot_id, RadarMainParam param,
       uint32_t& value) = 0;
 
   /**
@@ -205,7 +210,7 @@ class IRadarSensor {
    * @param id a parameter ID to be set.
    * @param value a new value for the parameter.
    */
-  virtual RadarReturnCode SetMainParam(uint8_t slot_id, RadarMainParam id,
+  virtual RadarReturnCode SetMainParam(uint8_t slot_id, RadarMainParam param,
       uint32_t value) = 0;
 
   /**
@@ -215,7 +220,7 @@ class IRadarSensor {
    * @param min_value where a minimum parameter value will be set.
    * @param max_value where a maximum parameter value will be set.
    */
-  virtual RadarReturnCode GetMainParamRange(RadarMainParam id,
+  virtual RadarReturnCode GetMainParamRange(RadarMainParam param,
       uint32_t& min_value, uint32_t& max_value) = 0;
 
   /**
@@ -227,8 +232,8 @@ class IRadarSensor {
    * @param id a parameter ID to read.
    * @param value to where a parameter value will be written into.
    */
-  virtual RadarReturnCode GetTxParam(uint8_t slot_id, uint32_t antanna_mask,
-      RadarTxParam id, uint32_t& value) = 0;
+  virtual RadarReturnCode GetTxParam(uint8_t slot_id, uint32_t antenna_mask,
+      RadarTxParam param, uint32_t& value) = 0;
 
   /**
    * @brief Set a TX specific parameter.
@@ -238,31 +243,8 @@ class IRadarSensor {
    * @param id a parameter ID to set.
    * @param value a new value for the parameter.
    */
-  virtual RadarReturnCode SetTxParam(uint8_t slot_id, uint32_t antanna_mask,
-      RadarTxParam id, uint32_t value) = 0;
-
-  /**
-   * @brief Get a RX specific parameter.
-   *
-   * @param slot_id a configuration slot ID where to read the parameter value.
-   * @param antenna_mask antenna bit mask from which to get the parameter value.
-   *                     Only one bit should be set.
-   * @param id a parameter ID to read.
-   * @param value to where a parameter value will be written into.
-   */
-  virtual RadarReturnCode GetRxParam(uint8_t slot_id, uint32_t antanna_mask,
-      RadarRxParam id, uint32_t& value) = 0;
-
-  /**
-   * @brief Set a RX specific parameter.
-   *
-   * @param slot_id a configuration slot ID where to set a new parameter value.
-   * @param antenna_mask antenna bit mask for which to get the parameter value.
-   * @param id a parameter ID to set.
-   * @param value a new value for the parameter.
-   */
-  virtual RadarReturnCode SetRxParam(uint8_t slot_id, uint32_t antanna_mask,
-      RadarRxParam id, uint32_t value) = 0;
+  virtual RadarReturnCode SetTxParam(uint8_t slot_id, uint32_t antenna_mask,
+      RadarTxParam param, uint32_t value) = 0;
 
   /**
    * @brief Get a TX antenna parameter range of acceptable values.
@@ -275,13 +257,36 @@ class IRadarSensor {
       uint32_t& min_value, uint32_t& max_value) = 0;
 
   /**
+   * @brief Get a RX specific parameter.
+   *
+   * @param slot_id a configuration slot ID where to read the parameter value.
+   * @param antenna_mask antenna bit mask from which to get the parameter value.
+   *                     Only one bit should be set.
+   * @param id a parameter ID to read.
+   * @param value to where a parameter value will be written into.
+   */
+  virtual RadarReturnCode GetRxParam(uint8_t slot_id, uint32_t antenna_mask,
+      RadarRxParam param, uint32_t& value) = 0;
+
+  /**
+   * @brief Set a RX specific parameter.
+   *
+   * @param slot_id a configuration slot ID where to set a new parameter value.
+   * @param antenna_mask antenna bit mask for which to get the parameter value.
+   * @param id a parameter ID to set.
+   * @param value a new value for the parameter.
+   */
+  virtual RadarReturnCode SetRxParam(uint8_t slot_id, uint32_t antenna_mask,
+      RadarRxParam param, uint32_t value) = 0;
+
+  /**
    * @brief Get a RX antenna parameter range of acceptable values.
    *
    * @param id a parameter ID which range of values to read.
    * @param min_value where a minimum parameter value will be set.
    * @param max_value where a maximum parameter value will be set.
    */
-  virtual RadarReturnCode GetRxParamRange(RadarRxParam id,
+  virtual RadarReturnCode GetRxParamRange(RadarRxParam param,
       uint32_t& min_value, uint32_t& max_value) = 0;
 
   /**
@@ -291,8 +296,8 @@ class IRadarSensor {
    * @param id a vendor specific parameter ID to read.
    * @param value to where a parameter value will be written into.
    */
-  virtual RadarReturnCode GetVendorParam(uint8_t slot_id, RadarVendorParam id,
-      uint32_t& value) = 0;
+  virtual RadarReturnCode GetVendorParam(uint8_t slot_id,
+      RadarVendorParam param, uint32_t& value) = 0;
 
   /**
    * @brief Set a vendor specific parameter.
@@ -301,8 +306,84 @@ class IRadarSensor {
    * @param id a parameter ID to set.
    * @param value a new value for the parameter.
    */
-  virtual RadarReturnCode SetVendorParam(uint8_t slot_id, RadarVendorParam id,
-      uint32_t value) = 0;
+  virtual RadarReturnCode SetVendorParam(uint8_t slot_id,
+      RadarVendorParam param, uint32_t value) = 0;
+
+  /**
+   * @brief Get a vendor specific radar parameter range of acceptable values.
+   *
+   * @param id a vendor parameter ID which range of values to read.
+   * @param min_value where a minimum parameter value will be set.
+   * @param max_value where a maximum parameter value will be set.
+   */
+  virtual RadarReturnCode GetVendorParamRange(RadarVendorParam id,
+      uint32_t& min_value, uint32_t& max_value) = 0;
+
+  /**
+   * @brief Get a vendor specific TX parameter.
+   *
+   * @param slot_id a configuration slot ID where to read the parameter value.
+   * @param antenna_mask antenna bit mask from which to get the parameter value.
+   *                     Only one bit should be set.
+   * @param id a parameter ID to read.
+   * @param value to where a parameter value will be written into.
+   */
+  virtual RadarReturnCode GetVendorTxParam(uint8_t slot_id,
+      uint32_t antenna_mask, RadarVendorTxParam id, uint32_t& value) = 0;
+
+  /**
+   * @brief Set a vendor specific TX parameter.
+   *
+   * @param slot_id a configuration slot ID where to set a new parameter value.
+   * @param antenna_mask antenna bit mask for which to get the parameter value.
+   * @param id a parameter ID to set.
+   * @param value a new value for the parameter.
+   */
+  virtual RadarReturnCode SetVendorTxParam(uint8_t slot_id,
+      uint32_t antenna_mask, RadarVendorTxParam id, uint32_t value) = 0;
+
+  /**
+   * @brief Get a vendor specific TX parameter range of acceptable values.
+   *
+   * @param id a parameter ID which range of values to read.
+   * @param min_value where a minimum parameter value will be returned.
+   * @param max_value where a maximum parameter value will be returned.
+   */
+  virtual RadarReturnCode GetVendorTxParamRange(RadarVendorTxParam id,
+      uint32_t& min_value, uint32_t& max_value) = 0;
+
+  /**
+   * @brief Get a vendor specific RX parameter.
+   *
+   * @param slot_id a configuration slot ID where to read the parameter value.
+   * @param antenna_mask antenna bit mask from which to get the parameter value.
+   *                     Only one bit should be set.
+   * @param id a parameter ID to read.
+   * @param value to where a parameter value will be written into.
+   */
+  virtual RadarReturnCode GetVendorRxParam(uint8_t slot_id,
+      uint32_t antenna_mask, RadarVendorRxParam id, uint32_t& value) = 0;
+
+  /**
+   * @brief Set a vendor specific RX parameter.
+   *
+   * @param slot_id a configuration slot ID where to set a new parameter value.
+   * @param antenna_mask antenna bit mask for which to get the parameter value.
+   * @param id a parameter ID to set.
+   * @param value a new value for the parameter.
+   */
+  virtual RadarReturnCode SetVendorRxParam(uint8_t slot_id,
+      uint32_t antenna_mask, RadarVendorRxParam id, uint32_t value) = 0;
+
+  /**
+   * @brief Get a vendor specific RX parameter range of acceptable values.
+   *
+   * @param id a parameter ID which range of values to read.
+   * @param min_value where a minimum parameter value will be returned.
+   * @param max_value where a maximum parameter value will be returned.
+   */
+  virtual RadarReturnCode GetVendorRxParamRange(RadarVendorRxParam id,
+      uint32_t& min_value, uint32_t& max_value) = 0;
 
   // Running.
 
@@ -359,7 +440,29 @@ class IRadarSensor {
    *        to registered observers via OnLogMessage callback
    *        with a RLOG_INF log level.
    */
-  virtual RadarReturnCode LogSensorDetails(void);
+  virtual RadarReturnCode LogSensorDetails(void) = 0;
+
+  /**
+   * @brief Get TX antenna position offset in micrometers from a fixed origin.
+   *
+   * @param tx_mask bit mask of a single TX antenna which positiion to retrieve.
+   * @param x where the x offset (um) to be written.
+   * @param y where the y offset (um) to be written.
+   * @param z where the z offset (um) to be written.
+   */
+  virtual RadarReturnCode GetTxPosition(uint32_t tx_mask,
+      int32_t& x, int32_t& y, int32_t& z) = 0;
+
+  /**
+   * @brief Get RX antenna position offset in micrometers from a fixed origin.
+   *
+   * @param rx_mask bit mask of a single RX antenna which positiion to retrieve.
+   * @param x where the x offset (um) to be written.
+   * @param y where the y offset (um) to be written.
+   * @param z where the z offset (um) to be written.
+   */
+  virtual RadarReturnCode GetRxPosition(uint32_t rx_mask,
+      int32_t& x, int32_t& y, int32_t& z) = 0;
 
   /**
    * @brief Set a run time log level for radar API impl.
@@ -415,9 +518,22 @@ RadarReturnCode RadarSensorInit(void);
 RadarReturnCode RadarSensorDeinit(void);
 
 /**
- * @brief Return the instance of the RadarSensor implementation.
+ * @brief Create an intsance of the RadarSensor implementation.
+ *
+ * @param id a unique identifier of the radar chip.
+ *        Can be used to differentiate if multiple radar available at the
+ *        same time.
+ *
+ * @return Pointer to the RadarSensor implementation.
  */
-IRadarSensor* GetRadarSensorImpl(void);
+IRadarSensor* CreateRadarSensor(int32_t id);
+
+/**
+ * @brief Destroy the instance of the RadarSensor implementation.
+ *
+ * @param radar pointer to the instance to be destroyed.
+ */
+RadarReturnCode DestroyRadarSensor(IRadarSensor* radar);
 
 } // namespace radar_api
 
